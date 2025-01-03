@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Categories {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  Posts       Posts[]
+}
+
+model Users {
+  id        String              @id @default(uuid())
+  username  String
+  email     String           @unique
+  password  String
+  googleId  String?
+  isAdmin   Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  Posts     Posts[]
+  Comments  Comments[]
+  Keywords  SearchKeywords[]
+  Activities SocialActivity[]
+}
+
+model Posts {
+  id         String          @id @default(uuid())
+  title      String
+  content    String
+  categoryId String
+  authorId   String
+  likes      Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  category   Categories   @relation(fields: [categoryId], references: [id])
+  author     Users        @relation(fields: [authorId], references: [id])
+  Comments   Comments[]
+  Activities SocialActivity[]
+}
+
+model Comments {
+  id        String          @id @default(uuid())
+  content   String
+  postId    String
+  userId    String
+  parentId  String?         
+  likes     Int          @default(0)
+  createdAt DateTime     @default(now())
+  post      Posts        @relation(fields: [postId], references: [id])
+  user      Users        @relation(fields: [userId], references: [id])
+  parent    Comments?    @relation("CommentParent", fields: [parentId], references: [id])
+  children  Comments[]   @relation("CommentParent")
+  Activities SocialActivity[]
+}
+
+model SearchKeywords {
+  id        String      @id @default(uuid())
+  keyword   String
+  userId    String
+  createdAt DateTime @default(now())
+  user      Users    @relation(fields: [userId], references: [id])
+}
+
+model SocialActivity {
+  id          String      @id @default(uuid())
+  userId      String
+  postId      String?
+  commentId   String?
+  activityType String
+  createdAt   DateTime @default(now())
+  user        Users    @relation(fields: [userId], references: [id])
+  post        Posts?   @relation(fields: [postId], references: [id])
+  comment     Comments? @relation(fields: [commentId], references: [id])
+}
